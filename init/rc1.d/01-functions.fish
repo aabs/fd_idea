@@ -1,4 +1,19 @@
-function idea
+define_command idea "fishdots plugin for working through ideas"
+define_subcommand idea consolidate on_idea_consolidate "Consolidate all of the components of the current idea in a single file"
+define_subcommand idea create on_idea_create "Create a new idea to solve"
+define_subcommand_nonevented idea home idea_home "switch to the home folder of the current idea"
+define_subcommand idea thought on_idea_thought "Record a thought relating to the current idea"
+define_subcommand idea subidea on_idea_subidea "Record a sub idea "
+define_subcommand_nonevented idea ls idea_ls "List all of the ideas"
+define_subcommand_nonevented idea open idea_open "choose an existing idea to work on"
+define_subcommand idea question on_idea_question "Record a question to be answered"
+define_subcommand_nonevented idea summarise idea_summarise "Summarise everything recorded for the current idea"
+define_subcommand idea save on_idea_save "Save all edits locally"
+define_subcommand idea sync on_idea_sync "save all edits then Sync to origin"
+define_subcommand idea test on_idea_test "Record a Test to perform"
+define_subcommand idea task on_idea_task "Record a Task to perform"
+
+function ideaold
   if test 0 -eq (count $argv)
     idea_help
     return
@@ -35,7 +50,7 @@ function idea
   end
 end
 
-function idea_create -a title summary
+function idea_create -a title summary -e on_idea_create
     set -U FD_IDEA_CURRENT (idea_create_path $title)
     mkdir -p $FD_IDEA_CURRENT
     echo -e "# IDEA: $title\n\n- $summary" > $FD_IDEA_CURRENT/idea.md
@@ -47,44 +62,29 @@ function idea_create -a title summary
 end
 
 function idea_open -d "select from existing ideas"
-  set matches (find $FD_IDEA_HOME/ -maxdepth 1 -mindepth 1 -type d ! -name ".git")
-  if test 1 -eq (count $matches) and test -d $matches
-    set -U FD_IDEA_CURRENT $matches[1]
-    echo "chose option 1"
-    return
-  end
-  set -g dcmd "dialog --stdout --no-tags --menu 'select the file to edit' 20 60 20 " 
-  set c 1
-  for option in $matches
-    set l (get_file_relative_path $option)
-    set -g dcmd "$dcmd $c '$l'"
-    set c (math $c + 1)
-  end
-  set choice (eval "$dcmd")
-  clear
-  if test $status -eq 0
-  echo "edit option $choice"
-    set -U FD_IDEA_CURRENT $matches[$choice]
-  end
+    fd_item_selector (find $FD_IDEA_HOME/ -maxdepth 1 -mindepth 1 -type d ! -name ".git")
+    if set -q fd_selected_item
+        set -U FD_IDEA_CURRENT $fd_selected_item
+    end
 end
 
-function idea_thought -a the_fact
+function idea_thought -a the_fact -e on_idea_thought
     echo -e "- $the_fact" >> $FD_IDEA_CURRENT/thought.md
 end
 
-function idea_question -a the_question
+function idea_question -a the_question -e on_idea_question
     echo -e "- $the_question" >> $FD_IDEA_CURRENT/questions.md
 end
 
-function idea_test -a the_test
+function idea_test -e on_idea_test -a the_test
     echo -e "- $the_test" >> $FD_IDEA_CURRENT/tests.md
 end
 
-function idea_subidea -a the_idea
+function idea_subidea -a the_idea -e on_idea_subidea
     echo -e "- $the_idea" >> $FD_IDEA_CURRENT/subideas.md
 end
 
-function idea_task -a the_task
+function idea_task -e on_idea_task -a the_task
     echo -e "- $the_task" >> $FD_IDEA_CURRENT/tasks.md
 end
 
@@ -102,16 +102,16 @@ function idea_summarise
     cat $FD_IDEA_CURRENT/tasks.md
 end
 
-function idea_consolidate
+function idea_consolidate -e on_idea_consolidate
     set -l target "$FD_IDEA_HOME"/(basename $FD_IDEA_CURRENT).md
     summarise > $target
 end
 
-function idea_save -d "save all new or modified notes locally"
+function idea_save -e on_idea_save -d "save all new or modified notes locally"
   fishdots_git_save $FD_IDEA_HOME  "prob updates and additions"
 end
 
-function idea_sync -d "save all notes to origin repo"
+function idea_sync -e on_idea_sync -d "save all notes to origin repo"
   fishdots_git_sync $FD_IDEA_HOME  "prob updates and additions"
 end
 
@@ -123,7 +123,6 @@ end
 function _leave_idea_home
   popd
 end
-
 
 function idea_help -d "display usage info"
   echo "Fishdots ideas Usage"
@@ -182,3 +181,10 @@ function idea_create_path -d "USAGE: idea_create_path 'blah' => ~/.ideas/2018-02
     echo "$FD_IDEA_HOME/$d-$title_slug"
 end
 
+function idea_ls -d 'list all recorded ideas'
+    find $FD_IDEA_HOME/ -maxdepth 1 -mindepth 1 -type d ! -name '.git'
+end
+
+function idea_home -d 'cd to idea root folder'
+  cd $FD_IDEA_HOME
+end
