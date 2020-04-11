@@ -1,0 +1,5 @@
+abbr -a idc 'idea create'
+abbr -a ids 'idea summarise'
+abbr -a idth 'idea thought'
+abbr -a idq  'idea question'
+abbr -a idh  'idea home'

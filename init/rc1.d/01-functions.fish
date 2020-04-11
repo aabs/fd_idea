@@ -1,10 +1,9 @@
 define_command idea "fishdots plugin for working through ideas"
 define_subcommand idea consolidate on_idea_consolidate "Consolidate all of the components of the current idea in a single file"
-define_subcommand idea create on_idea_create "Create a new idea to solve"
+define_subcommand_nonevented idea create idea_create "<title> <summary> Create a new idea to solve"
 define_subcommand_nonevented idea home idea_home "switch to the home folder of the current idea"
 define_subcommand idea thought on_idea_thought "Record a thought relating to the current idea"
-define_subcommand idea subidea on_idea_subidea "Record a sub idea "
-define_subcommand_nonevented idea ls idea_ls "List all of the ideas"
+\define_subcommand_nonevented idea ls idea_ls "List all of the ideas"
 define_subcommand_nonevented idea open idea_open "choose an existing idea to work on"
 define_subcommand idea question on_idea_question "Record a question to be answered"
 define_subcommand_nonevented idea summarise idea_summarise "Summarise everything recorded for the current idea"
@@ -50,14 +49,16 @@ function ideaold
   end
 end
 
-function idea_create -a title summary -e on_idea_create
+function idea_create
+    input_set title "what is the title"
+    input_set summary "what is the summary"
+
     set -U FD_IDEA_CURRENT (idea_create_path $title)
-    mkdir -p $FD_IDEA_CURRENT
-    echo -e "# IDEA: $title\n\n- $summary" > $FD_IDEA_CURRENT/idea.md
-    echo -e "# KNOWN\n\n" > $FD_IDEA_CURRENT/thought.md
+    mkdir -p "$FD_IDEA_CURRENT"
+    echo -e "# IDEA: "$title"\n\n- "$summary > $FD_IDEA_CURRENT/idea.md
+    echo -e "# THOUGHTS\n\n" > $FD_IDEA_CURRENT/thoughts.md
     echo -e "# QUESTIONS\n\n" > $FD_IDEA_CURRENT/questions.md
     echo -e "# TESTS\n\n" > $FD_IDEA_CURRENT/tests.md
-    echo -e "# SUB-IDEAS\n\n" > $FD_IDEA_CURRENT/subideas.md
     echo -e "# TASKS\n\n" > $FD_IDEA_CURRENT/tasks.md
 end
 
@@ -69,7 +70,7 @@ function idea_open -d "select from existing ideas"
 end
 
 function idea_thought -a the_fact -e on_idea_thought
-    echo -e "- $the_fact" >> $FD_IDEA_CURRENT/thought.md
+    echo -e "- $the_fact" >> $FD_IDEA_CURRENT/thoughts.md
 end
 
 function idea_question -a the_question -e on_idea_question
@@ -80,10 +81,6 @@ function idea_test -e on_idea_test -a the_test
     echo -e "- $the_test" >> $FD_IDEA_CURRENT/tests.md
 end
 
-function idea_subidea -a the_idea -e on_idea_subidea
-    echo -e "- $the_idea" >> $FD_IDEA_CURRENT/subideas.md
-end
-
 function idea_task -e on_idea_task -a the_task
     echo -e "- $the_task" >> $FD_IDEA_CURRENT/tasks.md
 end
@@ -91,13 +88,11 @@ end
 function idea_summarise
     cat $FD_IDEA_CURRENT/idea.md
     echo ""
-    cat $FD_IDEA_CURRENT/thought.md
+    cat $FD_IDEA_CURRENT/thoughts.md
     echo ""
     cat $FD_IDEA_CURRENT/questions.md
     echo ""
     cat $FD_IDEA_CURRENT/tests.md
-    echo ""
-    cat $FD_IDEA_CURRENT/subideas.md
     echo ""
     cat $FD_IDEA_CURRENT/tasks.md
 end
@@ -175,8 +170,8 @@ function idea_help -d "display usage info"
     echo""
 end
 
-function idea_create_path -d "USAGE: idea_create_path 'blah' => ~/.ideas/2018-02-21.mojo.md"
-    set -l title_slug (string sub -l 32 (string replace " " "_" $argv[1]))
+function idea_create_path -a title -d "USAGE: idea_create_path 'blah' => ~/.ideas/2018-02-21.mojo.md"
+    set -l title_slug (to_slug $title)
     set -l d (date --iso-8601)
     echo "$FD_IDEA_HOME/$d-$title_slug"
 end

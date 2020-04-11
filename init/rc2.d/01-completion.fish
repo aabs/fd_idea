@@ -1,1 +1,0 @@
-complete -c idea -x -a "home create thought question test subidea task summarise save sync consolidate"
